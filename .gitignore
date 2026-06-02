@@ -1,0 +1,29 @@
+# OS
+.DS_Store
+.AppleDouble
+Thumbs.db
+desktop.ini
+
+# Editors / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node (если позже добавите тулинг/сборку)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+package-lock.json.bak
+
+# Сборка / временное
+dist/
+build/
+.cache/
+*.log
+
+# Окружение / секреты
+.env
+.env.*
+!.env.example
