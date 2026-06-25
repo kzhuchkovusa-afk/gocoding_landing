@@ -1,0 +1,18 @@
+# Netlify configuration for the GoCoding landing page.
+# Static site at the repo root + serverless functions for the booking form.
+
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+# The frontend calls /api/slots and /api/book. Route those to the functions so
+# the form code stays host-agnostic.
+[[redirects]]
+  from = "/api/slots"
+  to = "/.netlify/functions/slots"
+  status = 200
+
+[[redirects]]
+  from = "/api/book"
+  to = "/.netlify/functions/book"
+  status = 200

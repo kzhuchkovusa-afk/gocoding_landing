@@ -295,6 +295,43 @@ ul { margin: 0; padding: 0; list-style: none; }
 .field input::placeholder { color: var(--text-muted); }
 .field input:focus, .field select:focus { outline: none; border-color: var(--brand-primary); box-shadow: 0 0 0 3px rgba(59,130,246,.2); }
 .widget form .btn { margin-top: 8px; }
+
+/* ----- Multi-step trial booking form ----- */
+.bf-progress { height: 6px; border-radius: 999px; background: #EEF2F7; overflow: hidden; margin: 2px 0 18px; }
+.bf-progress__bar { height: 100%; width: 25%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--brand-primary), var(--brand-secondary));
+  transition: width .5s cubic-bezier(.4,0,.2,1); }
+.bf-step { display: none; }
+.bf-step.is-active { display: block; animation: bfFade .25s ease; }
+@keyframes bfFade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.bf-fieldset-label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 5px; }
+.bf-radio-row { display: flex; gap: 10px; }
+.bf-radio { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
+  background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: var(--radius-input); padding: 12px 14px;
+  font-size: 15px; color: var(--text-primary);
+  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease; }
+.bf-radio input { accent-color: var(--brand-primary); width: 16px; height: 16px; margin: 0; }
+.bf-radio.is-checked { border-color: var(--brand-primary); background: #fff; box-shadow: 0 0 0 3px rgba(59,130,246,.18); }
+.bf-actions { display: flex; gap: 10px; margin-top: 8px; }
+.bf-actions .btn { flex: 1 1 auto; margin-top: 0; }
+.bf-actions .btn--ghost { flex: 0 0 38%; text-transform: none; letter-spacing: 0; }
+.field input.is-invalid, .field select.is-invalid { border-color: var(--accent-cta) !important; box-shadow: 0 0 0 3px rgba(239,68,68,.15); }
+.bf-error { color: var(--accent-cta); font-size: 12.5px; margin: 5px 0 0; }
+.bf-error--submit { text-align: center; margin-top: 10px; }
+.bf-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 282px; overflow-y: auto; padding: 2px; margin-bottom: 4px; }
+.bf-slot { font-family: var(--font-body); font-size: 13.5px; line-height: 1.3; color: var(--text-primary); text-align: left;
+  background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: var(--radius-input); padding: 10px 12px; cursor: pointer;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease; }
+.bf-slot:hover { border-color: var(--brand-primary); }
+.bf-slot.is-selected { border-color: var(--brand-primary); background: #fff; box-shadow: 0 0 0 3px rgba(59,130,246,.2); font-weight: 600; }
+.bf-slots__state { grid-column: 1 / -1; text-align: center; color: var(--text-secondary); font-size: 14px;
+  padding: 26px 10px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.bf-slots__state a { color: var(--brand-primary); font-weight: 600; white-space: nowrap; }
+.bf-spinner { width: 26px; height: 26px; border-radius: 50%; border: 3px solid #E2E8F0; border-top-color: var(--brand-primary); animation: bfSpin .8s linear infinite; }
+@keyframes bfSpin { to { transform: rotate(360deg); } }
+.ty-slot { display: inline-block; font-family: var(--font-head); font-weight: 800; font-size: 20px; color: var(--brand-primary);
+  background: #EEF4FF; border-radius: 12px; padding: 12px 20px; margin: 4px 0 14px; }
+
 .widget__trust { display: flex; align-items: center; gap: 7px; justify-content: center; margin-top: 12px; font-size: 12.5px; color: var(--text-muted); }
 
 /* Floating hero badges */
@@ -745,25 +782,83 @@ ul { margin: 0; padding: 0; list-style: none; }
           </div>
 
           <form id="registration-form" novalidate>
-            <div class="field">
-              <label for="f-parent">Parent's name</label>
-              <input id="f-parent" name="parent" type="text" placeholder="Your full name" required />
+            <div class="bf-progress"><div class="bf-progress__bar" id="bf-progress-bar"></div></div>
+
+            <!-- Step 1 — Basic info -->
+            <div class="bf-step is-active" data-step="1">
+              <div class="field">
+                <label for="bf-grade">Child's grade</label>
+                <select id="bf-grade" name="grade" required>
+                  <option value="" disabled selected>Select grade</option>
+                  <option value="1">Grade 1</option><option value="2">Grade 2</option>
+                  <option value="3">Grade 3</option><option value="4">Grade 4</option>
+                  <option value="5">Grade 5</option><option value="6">Grade 6</option>
+                  <option value="7">Grade 7</option><option value="8">Grade 8</option>
+                  <option value="9">Grade 9</option><option value="10">Grade 10</option>
+                  <option value="11">Grade 11</option><option value="12">Grade 12</option>
+                </select>
+                <p class="bf-error" data-error-for="bf-grade"></p>
+              </div>
+              <div class="field">
+                <span class="bf-fieldset-label">Do you have a computer at home?</span>
+                <div class="bf-radio-row">
+                  <label class="bf-radio"><input type="radio" name="hasComputer" value="yes" /><span>Yes</span></label>
+                  <label class="bf-radio"><input type="radio" name="hasComputer" value="no" /><span>No</span></label>
+                </div>
+                <p class="bf-error" data-error-for="hasComputer"></p>
+              </div>
+              <button type="button" class="btn btn--cta btn--block" data-next>Next</button>
             </div>
-            <div class="field">
-              <label for="f-phone">Phone (WhatsApp)</label>
-              <input id="f-phone" name="phone" type="tel" placeholder="+1 (___) ___-____" required />
+
+            <!-- Step 2 — Choose date & time -->
+            <div class="bf-step" data-step="2">
+              <span class="bf-fieldset-label">Choose a date &amp; time</span>
+              <div class="bf-slots" id="bf-slots">
+                <div class="bf-slots__state"><span class="bf-spinner"></span> Loading available times…</div>
+              </div>
+              <p class="bf-error" data-error-for="slot"></p>
+              <div class="bf-actions">
+                <button type="button" class="btn btn--ghost" data-back>Back</button>
+                <button type="button" class="btn btn--cta" id="bf-step2-next" data-next disabled>Next</button>
+              </div>
             </div>
-            <div class="field">
-              <label for="f-age">Child's age</label>
-              <select id="f-age" name="age" required>
-                <option value="" disabled selected>Select age</option>
-                <option>7</option><option>8</option><option>9</option><option>10</option>
-                <option>11</option><option>12</option><option>13</option><option>14</option><option>15</option>
-              </select>
+
+            <!-- Step 3 — Names -->
+            <div class="bf-step" data-step="3">
+              <div class="field">
+                <label for="bf-child">Child's name</label>
+                <input id="bf-child" name="childName" type="text" placeholder="Child's full name" required />
+                <p class="bf-error" data-error-for="bf-child"></p>
+              </div>
+              <div class="field">
+                <label for="bf-parent">Parent's name</label>
+                <input id="bf-parent" name="parentName" type="text" placeholder="Your full name" required />
+                <p class="bf-error" data-error-for="bf-parent"></p>
+              </div>
+              <div class="bf-actions">
+                <button type="button" class="btn btn--ghost" data-back>Back</button>
+                <button type="button" class="btn btn--cta" data-next>Next</button>
+              </div>
             </div>
-            <button type="submit" class="btn btn--cta btn--block">
-              Book Your Trial Workshop Class
-            </button>
+
+            <!-- Step 4 — Contact & submit -->
+            <div class="bf-step" data-step="4">
+              <div class="field">
+                <label for="bf-phone">Phone</label>
+                <input id="bf-phone" name="phone" type="tel" placeholder="+1 (___) ___-____" required />
+                <p class="bf-error" data-error-for="bf-phone"></p>
+              </div>
+              <div class="field">
+                <label for="bf-email">Email</label>
+                <input id="bf-email" name="email" type="email" placeholder="you@example.com" required />
+                <p class="bf-error" data-error-for="bf-email"></p>
+              </div>
+              <div class="bf-actions">
+                <button type="button" class="btn btn--ghost" data-back>Back</button>
+                <button type="submit" class="btn btn--cta">Book Trial Lesson</button>
+              </div>
+              <p class="bf-error bf-error--submit" id="bf-submit-error"></p>
+            </div>
           </form>
           <div class="widget__trust">🔒 No obligations · We'll confirm your time via WhatsApp</div>
         </div>
@@ -1368,19 +1463,210 @@ ul { margin: 0; padding: 0; list-style: none; }
     });
   });
 
-  /* ---------- Form submission + FB Lead + loading overlay ---------- */
-  document.addEventListener("DOMContentLoaded", function () {
+  /* ---------- Multi-step trial booking form ---------- */
+  (function () {
+    // Same-origin by default: on Netlify, /api/slots and /api/book are routed
+    // to the serverless functions via netlify.toml. For a split deploy (API on
+    // a different host), set this to that origin, e.g. "https://your-app.netlify.app".
+    var API_BASE = "";
+
     var form = document.getElementById("registration-form");
     if (!form) return;
-    form.addEventListener("submit", function (event) {
-      event.preventDefault();
-      var overlay = document.getElementById("loading-overlay");
-      if (overlay) overlay.classList.add("is-on");
-      try { sessionStorage.setItem("gc_lead", "1"); } catch (e) {}
-      if (typeof fbq !== "undefined") { fbq("track", "Lead"); }
-      setTimeout(function () { if (overlay) overlay.classList.remove("is-on"); var ty = document.getElementById("ty-overlay"); if (ty) { ty.classList.add("is-open"); document.body.style.overflow = "hidden"; } }, 1500);
+
+    var steps = [].slice.call(form.querySelectorAll(".bf-step"));
+    var progressBar = document.getElementById("bf-progress-bar");
+    var current = 1;
+    var slotsLoaded = false;
+    var state = {
+      grade: "", hasComputer: null, slotTime: "", slotLabel: "",
+      childName: "", parentName: "", phone: "", email: ""
+    };
+    // Progress bar fill per visible step (step N visible = step N-1 completed).
+    var PROGRESS = { 1: 25, 2: 50, 3: 75, 4: 90 };
+
+    function $(sel) { return form.querySelector(sel); }
+
+    function showStep(n) {
+      current = n;
+      steps.forEach(function (s) {
+        s.classList.toggle("is-active", parseInt(s.getAttribute("data-step"), 10) === n);
+      });
+      if (progressBar) progressBar.style.width = (PROGRESS[n] || 25) + "%";
+      if (n === 2 && !slotsLoaded) loadSlots();
+    }
+
+    function setError(key, msg) {
+      var el = form.querySelector('[data-error-for="' + key + '"]');
+      if (el) el.textContent = msg || "";
+    }
+    function clearErrors() {
+      form.querySelectorAll(".bf-error").forEach(function (e) { e.textContent = ""; });
+      form.querySelectorAll(".is-invalid").forEach(function (e) { e.classList.remove("is-invalid"); });
+    }
+
+    /* ----- validation ----- */
+    function emailValid(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+    function phoneDigits(v) { return (v.match(/\d/g) || []).length; }
+
+    function validateStep(n, writeErrors) {
+      var ok = true;
+      function fail(key, el, msg) {
+        ok = false;
+        if (writeErrors) { setError(key, msg); if (el) el.classList.add("is-invalid"); }
+      }
+      if (n === 1) {
+        var grade = $("#bf-grade");
+        if (!grade.value) fail("bf-grade", grade, "Please select a grade.");
+        if (!form.querySelector('input[name="hasComputer"]:checked')) fail("hasComputer", null, "Please choose an option.");
+      } else if (n === 2) {
+        if (!state.slotTime) fail("slot", null, "Please select a date and time.");
+      } else if (n === 3) {
+        var child = $("#bf-child");
+        if (!child.value.trim()) fail("bf-child", child, "Please enter the child's name.");
+        var parent = $("#bf-parent");
+        if (!parent.value.trim()) fail("bf-parent", parent, "Please enter the parent's name.");
+      } else if (n === 4) {
+        var phone = $("#bf-phone");
+        if (phoneDigits(phone.value) < 7) fail("bf-phone", phone, "Please enter a valid phone number.");
+        var email = $("#bf-email");
+        if (!emailValid(email.value.trim())) fail("bf-email", email, "Please enter a valid email.");
+      }
+      return ok;
+    }
+
+    function captureStep(n) {
+      if (n === 1) {
+        state.grade = $("#bf-grade").value;
+        var comp = form.querySelector('input[name="hasComputer"]:checked');
+        state.hasComputer = comp ? comp.value === "yes" : null;
+      } else if (n === 3) {
+        state.childName = $("#bf-child").value.trim();
+        state.parentName = $("#bf-parent").value.trim();
+      } else if (n === 4) {
+        state.phone = $("#bf-phone").value.trim();
+        state.email = $("#bf-email").value.trim();
+      }
+    }
+
+    /* ----- radio visual state ----- */
+    form.querySelectorAll('input[name="hasComputer"]').forEach(function (r) {
+      r.addEventListener("change", function () {
+        form.querySelectorAll(".bf-radio").forEach(function (lbl) {
+          lbl.classList.toggle("is-checked", lbl.querySelector("input").checked);
+        });
+        setError("hasComputer", "");
+      });
     });
-  });
+
+    /* ----- slot loading (step 2) ----- */
+    function loadSlots() {
+      slotsLoaded = true;
+      var container = document.getElementById("bf-slots");
+      container.innerHTML = '<div class="bf-slots__state"><span class="bf-spinner"></span> Loading available times…</div>';
+      fetch(API_BASE + "/api/slots")
+        .then(function (r) { if (!r.ok) throw new Error("bad status"); return r.json(); })
+        .then(function (data) {
+          var slots = (data && data.slots) || [];
+          if (!slots.length) {
+            container.innerHTML = '<div class="bf-slots__state">No trial lessons available right now. Call us: <a href="tel:+19179294626">+1 917 929 46 26</a></div>';
+            return;
+          }
+          container.innerHTML = "";
+          slots.forEach(function (slot) {
+            var tile = document.createElement("button");
+            tile.type = "button";
+            tile.className = "bf-slot";
+            tile.textContent = slot.label;
+            tile.addEventListener("click", function () {
+              container.querySelectorAll(".bf-slot").forEach(function (t) { t.classList.remove("is-selected"); });
+              tile.classList.add("is-selected");
+              state.slotTime = slot.start;
+              state.slotLabel = slot.label;
+              setError("slot", "");
+              var next = document.getElementById("bf-step2-next");
+              if (next) next.disabled = false;
+            });
+            container.appendChild(tile);
+          });
+        })
+        .catch(function () {
+          slotsLoaded = false; // allow a retry if the user steps away and back
+          container.innerHTML = '<div class="bf-slots__state">Could not load schedule. Please refresh the page.</div>';
+        });
+    }
+
+    /* ----- navigation ----- */
+    form.addEventListener("click", function (e) {
+      if (e.target.closest("[data-next]")) {
+        clearErrors();
+        if (!validateStep(current, true)) return;
+        captureStep(current);
+        if (current < 4) showStep(current + 1);
+      } else if (e.target.closest("[data-back]")) {
+        clearErrors();
+        if (current > 1) showStep(current - 1);
+      }
+    });
+
+    /* ----- submit ----- */
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      clearErrors();
+
+      // Validate every step; jump to the first invalid one.
+      var firstInvalid = 0;
+      for (var s = 1; s <= 4; s++) {
+        if (!validateStep(s, true) && !firstInvalid) firstInvalid = s;
+      }
+      if (firstInvalid) { showStep(firstInvalid); return; }
+
+      captureStep(1); captureStep(3); captureStep(4);
+
+      var overlay = document.getElementById("loading-overlay");
+      var submitErr = document.getElementById("bf-submit-error");
+      if (submitErr) submitErr.textContent = "";
+      if (overlay) overlay.classList.add("is-on");
+
+      fetch(API_BASE + "/api/book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          grade: state.grade,
+          hasComputer: state.hasComputer,
+          slotTime: state.slotTime,
+          slotLabel: state.slotLabel,
+          childName: state.childName,
+          parentName: state.parentName,
+          phone: state.phone,
+          email: state.email
+        })
+      })
+        .then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (body) {
+            return { ok: r.ok, body: body };
+          });
+        })
+        .then(function (res) {
+          if (overlay) overlay.classList.remove("is-on");
+          if (!res.ok || !res.body || res.body.success !== true) throw new Error("book failed");
+
+          // Lead confirmed in Google Sheets — fire Pixel, then show thank-you.
+          try { sessionStorage.setItem("gc_lead", "1"); } catch (e2) {}
+          if (typeof fbq !== "undefined") { fbq("track", "Lead"); }
+          if (progressBar) progressBar.style.width = "100%";
+          var slotEl = document.getElementById("ty-slot");
+          if (slotEl) slotEl.textContent = state.slotLabel;
+          var ty = document.getElementById("ty-overlay");
+          if (ty) { ty.classList.add("is-open"); document.body.style.overflow = "hidden"; }
+        })
+        .catch(function () {
+          if (overlay) overlay.classList.remove("is-on");
+          if (submitErr) submitErr.textContent = "Something went wrong. Please call us: +1 917 929 46 26";
+        });
+    });
+
+    showStep(1);
+  })();
 
   /* ---------- Mobile burger: toggle slide-down nav menu ---------- */
   var burger = document.querySelector(".nav__burger");
@@ -1409,8 +1695,10 @@ ul { margin: 0; padding: 0; list-style: none; }
   <div class="popup" style="max-width:560px;text-align:center;">
     <button class="popup__close" aria-label="Close" onclick="document.getElementById('ty-overlay').classList.remove('is-open');document.body.style.overflow='';">×</button>
     <div style="width:78px;height:78px;border-radius:50%;margin:4px auto 20px;display:grid;place-items:center;font-size:38px;color:#fff;background:linear-gradient(135deg,var(--accent-success),#34D399);box-shadow:0 12px 30px rgba(16,185,129,.4);">✓</div>
-    <h2 id="ty-title" style="font-size:26px;margin-bottom:10px;">Your spot is reserved! 🎉</h2>
-    <p style="font-size:16px;margin-bottom:22px;">Thank you — we'll reach out via WhatsApp shortly to confirm your child's trial workshop time.</p>
+    <h2 id="ty-title" style="font-size:26px;margin-bottom:10px;">You're all set! 🎉</h2>
+    <p style="font-size:16px;margin-bottom:6px;">Your trial lesson is booked for</p>
+    <div class="ty-slot" id="ty-slot">—</div>
+    <p style="font-size:16px;margin-bottom:22px;">We'll reach out during business hours to confirm your spot and help you get ready for the lesson.</p>
     <div style="display:inline-flex;flex-direction:column;gap:3px;padding:16px 24px;border-radius:14px;background:var(--bg-dark);color:#fff;">
       <span style="font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.6);font-family:var(--font-head);font-weight:600;">Questions? Call us</span>
       <a href="tel:+19179294626" style="color:#fff;font-family:var(--font-head);font-weight:800;font-size:22px;">+1 917 929 46 26</a>
