@@ -1,0 +1,9 @@
+{
+  "name": "gocoding-landing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GoCoding NYC landing page with a trial-lesson self-booking API (Calendly + Google Sheets + Telegram).",
+  "engines": {
+    "node": ">=18"
+  }
+}
