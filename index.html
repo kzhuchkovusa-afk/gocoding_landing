@@ -1465,9 +1465,9 @@ ul { margin: 0; padding: 0; list-style: none; }
 
   /* ---------- Multi-step trial booking form ---------- */
   (function () {
-    // Same-origin by default (frontend + API on the same Vercel deploy).
-    // For a split deploy (e.g. frontend on GitHub Pages), set this to the API
-    // origin, e.g. "https://your-app.vercel.app".
+    // Same-origin by default: on Netlify, /api/slots and /api/book are routed
+    // to the serverless functions via netlify.toml. For a split deploy (API on
+    // a different host), set this to that origin, e.g. "https://your-app.netlify.app".
     var API_BASE = "";
 
     var form = document.getElementById("registration-form");

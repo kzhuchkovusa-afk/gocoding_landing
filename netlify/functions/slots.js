@@ -1,20 +1,27 @@
-// GET /api/slots
-// Returns the list of bookable trial-lesson slots for the form.
+// GET /api/slots  (mapped to this function via netlify.toml redirect)
 //
-// It reads availability from Calendly and current booking counts from the
-// Google Apps Script web app, then hides:
+// Returns the list of bookable trial-lesson slots for the form.
+// Reads availability from Calendly and current booking counts from the Google
+// Apps Script web app, then hides:
 //   - slots in the past
 //   - slots that fall on today's date (America/New_York) — managers need lead time
 //   - slots that already have 3 or more bookings
 //
-// All credentials stay server-side (env vars). The browser only ever sees the
-// filtered result.
+// All credentials stay server-side (Netlify env vars). The browser only ever
+// sees the filtered result.
 
 const CALENDLY_BASE = "https://api.calendly.com";
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 // Calendly limits a single availability request to a 7-day window. Scan a few
 // weeks ahead and merge the results so lessons scheduled further out still show.
 const WEEKS_AHEAD = 4;
+
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Content-Type": "application/json",
+};
 
 function nyDateString(date) {
   // YYYY-MM-DD for the given instant in New York time.
@@ -60,18 +67,17 @@ async function fetchCalendlyWindow(eventTypeUri, token, startISO, endISO) {
   return collected;
 }
 
-module.exports = async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  if (req.method === "OPTIONS") return res.status(204).end();
-  if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
+exports.handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
+  if (event.httpMethod !== "GET") {
+    return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: "Method not allowed" }) };
+  }
 
   const token = process.env.CALENDLY_ACCESS_TOKEN;
   const eventTypeUri = process.env.CALENDLY_EVENT_TYPE_URI;
   const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
   if (!token || !eventTypeUri || !scriptUrl) {
-    return res.status(500).json({ error: "Server is not configured" });
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: "Server is not configured" }) };
   }
 
   try {
@@ -116,8 +122,8 @@ module.exports = async (req, res) => {
       .sort((a, b) => new Date(a) - new Date(b))
       .map((startTime) => ({ start: startTime, label: formatLabel(new Date(startTime)) }));
 
-    return res.status(200).json({ slots });
+    return { statusCode: 200, headers: CORS, body: JSON.stringify({ slots }) };
   } catch (err) {
-    return res.status(502).json({ error: "Could not load schedule" });
+    return { statusCode: 502, headers: CORS, body: JSON.stringify({ error: "Could not load schedule" }) };
   }
 };

@@ -3,7 +3,7 @@
 Конверсионный лендинг для GoCoding: курсы программирования и 3D‑моделирования в Roblox для детей в Нью‑Йорке. Лендинг с **4‑шаговой формой самозаписи** на пробное занятие за $20.
 
 > **Фронтенд** — один файл `index.html` (HTML + CSS + JS, изображения в base64).
-> **Бэкенд** — serverless‑функции в папке `api/` (Node.js): подтягивают свободные слоты из Calendly, считают записи в Google Sheets, пишут заявку и шлют уведомление в Telegram. Рекомендуемый хостинг — **Vercel** (статика + `api/` из одного репозитория).
+> **Бэкенд** — serverless‑функции в папке `netlify/functions/` (Node.js): подтягивают свободные слоты из Calendly, считают записи в Google Sheets, пишут заявку и шлют уведомление в Telegram. Хостинг — **Netlify** (статика + функции из одного репозитория).
 
 ---
 
@@ -27,29 +27,30 @@
 
 ```
 gocoding_landing/
-├── index.html        # фронтенд (HTML + CSS + JS + изображения в base64)
-├── api/
-│   ├── slots.js      # GET /api/slots  — свободные слоты (Calendly + Google Sheets)
-│   └── book.js       # POST /api/book  — запись заявки (Google Sheets + Telegram)
-├── package.json      # метаданные проекта (Node ≥ 18)
-├── .env.example      # список переменных окружения (без реальных значений)
-├── .gitignore        # .env и пр. игнорируются
-├── .nojekyll         # GitHub Pages отдаёт файлы как есть, без Jekyll
+├── index.html             # фронтенд (HTML + CSS + JS + изображения в base64)
+├── netlify/
+│   └── functions/
+│       ├── slots.js       # GET /api/slots  — свободные слоты (Calendly + Google Sheets)
+│       └── book.js        # POST /api/book  — запись заявки (Google Sheets + Telegram)
+├── netlify.toml           # publish-каталог, функции, редиректы /api/* → функции
+├── package.json           # метаданные проекта (Node ≥ 18)
+├── .env.example           # список переменных окружения (без реальных значений)
+├── .gitignore             # .env и пр. игнорируются
+├── .nojekyll
 └── README.md
 ```
 
-## 🚀 Деплой на Vercel (рекомендуется)
+## 🚀 Деплой на Netlify
 
-Фронтенд и API живут в одном репозитории и деплоятся вместе.
+Фронтенд и функции живут в одном репозитории и деплоятся вместе. Репозиторий уже подключён к проекту Netlify `gocodinglanding`.
 
-1. Зайдите на [vercel.com](https://vercel.com) → **Add New… → Project** → импортируйте этот GitHub‑репозиторий.
-2. Framework Preset: **Other**. Build‑команда не нужна — Vercel сам отдаст `index.html` и поднимет функции из `api/`.
-3. **Settings → Environment Variables** — добавьте переменные из [`.env.example`](.env.example) с **реальными** значениями (см. ниже).
-4. **Deploy**. Сайт откроется на `https://<project>.vercel.app`, форма будет звать `/api/slots` и `/api/book` с того же домена.
+1. **Site configuration → Environment variables** — добавьте переменные из [`.env.example`](.env.example) с **реальными** значениями (см. ниже).
+2. Сборка не требуется: `netlify.toml` отдаёт `index.html` из корня и поднимает функции из `netlify/functions/`. Редиректы маршрутизируют `/api/slots` и `/api/book` на функции, поэтому фронтенд остаётся host‑agnostic.
+3. **Deploy** (push в `main` запускает деплой автоматически). Форма зовёт `/api/slots` и `/api/book` с того же домена.
 
 ### Переменные окружения
 
-Задаются **только** в Vercel (или локальном `.env`) — в репозиторий не коммитятся:
+Задаются **только** в Netlify (или локальном `.env`) — в репозиторий не коммитятся:
 
 | Переменная | Назначение |
 | :-- | :-- |
@@ -59,26 +60,22 @@ gocoding_landing/
 | `TELEGRAM_CHAT_ID` | ID группы менеджеров |
 | `GOOGLE_SCRIPT_URL` | URL веб‑приложения Google Apps Script |
 
-> ⚠️ Если токены где‑то засветились в открытом виде — **перевыпустите их** (Calendly → revoke/recreate token, Telegram → `/revoke` у @BotFather) и обновите значения в Vercel.
+> ⚠️ Если токены где‑то засветились в открытом виде — **перевыпустите их** (Calendly → revoke/recreate token, Telegram → `/revoke` у @BotFather) и обновите значения в Netlify.
 
 ### Свой домен
 
-**Vercel → Settings → Domains → Add** → введите домен и пропишите у регистратора DNS‑записи, которые покажет Vercel (A‑запись для apex и/или CNAME для `www`). HTTPS Vercel выпустит автоматически.
-
-## 🌐 Альтернатива: фронт на GitHub Pages + API на Vercel
-
-Можно оставить статику на GitHub Pages, а на Vercel задеплоить только `api/`. Тогда в `index.html` найдите `var API_BASE = ""` и впишите туда адрес API, например `https://<project>.vercel.app`. Функции уже отдают CORS‑заголовки. Для своего домена на Pages добавьте файл `CNAME` с доменом в корень репозитория и настройте DNS у регистратора.
+**Netlify → Domain management → Add a domain** → введите домен и пропишите у регистратора DNS‑записи, которые покажет Netlify (запись для apex и/или CNAME для `www`). HTTPS (Let's Encrypt) Netlify выпустит автоматически.
 
 ## 🧪 Локальный запуск
 
-Статику видно сразу: откройте `index.html` в браузере (форма дойдёт до шага 2, но без API список слотов покажет ошибку загрузки). Чтобы работал и бэкенд, поднимите всё через Vercel CLI:
+Статику видно сразу: откройте `index.html` в браузере (форма дойдёт до шага 2, но без API список слотов покажет ошибку загрузки). Чтобы работал и бэкенд, поднимите всё через Netlify CLI:
 
 ```bash
-npm i -g vercel
-vercel dev        # поднимет index.html + функции api/ на http://localhost:3000
+npm i -g netlify-cli
+netlify dev        # поднимет index.html + функции и редиректы /api/* на http://localhost:8888
 ```
 
-Не забудьте создать локальный `.env` на основе `.env.example`.
+Переменные окружения подтянутся из настроек проекта Netlify (или из локального `.env` на основе `.env.example`).
 
 ## 🛠 Как редактировать
 

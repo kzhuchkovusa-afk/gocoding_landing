@@ -1,13 +1,21 @@
-// POST /api/book
+// POST /api/book  (mapped to this function via netlify.toml redirect)
+//
 // Accepts the booking form data, writes the lead to Google Sheets and notifies
 // the school managers on Telegram.
 //
 // The Google Sheets write is the source of truth: only after it succeeds does
-// the endpoint return { success: true }. The Telegram notification is sent
+// the function return { success: true }. The Telegram notification is sent
 // afterwards and never fails a confirmed booking — but it IS awaited, because a
 // serverless function can be frozen the moment it responds, which would drop a
 // true "fire-and-forget" notification. Awaiting keeps notifications reliable
 // while still firing strictly after the lead is saved.
+
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Content-Type": "application/json",
+};
 
 function esc(value) {
   return String(value == null ? "" : value)
@@ -38,22 +46,19 @@ async function sendTelegram(lead, slotLabel) {
   });
 }
 
-module.exports = async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  if (req.method === "OPTIONS") return res.status(204).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+exports.handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: "Method not allowed" }) };
+  }
 
   const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
-  if (!scriptUrl) return res.status(500).json({ success: false, error: "Server is not configured" });
-
-  // Body may arrive already parsed (Vercel) or as a raw string.
-  let body = req.body;
-  if (typeof body === "string") {
-    try { body = JSON.parse(body); } catch (e) { body = {}; }
+  if (!scriptUrl) {
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: "Server is not configured" }) };
   }
-  body = body || {};
+
+  let body;
+  try { body = JSON.parse(event.body || "{}"); } catch (e) { body = {}; }
 
   // slotTime keeps Calendly's exact string so the sheet's per-slot counting,
   // which compares strings, stays consistent.
@@ -75,10 +80,10 @@ module.exports = async (req, res) => {
       body: JSON.stringify(lead),
     });
     if (!sheetRes.ok) {
-      return res.status(502).json({ success: false, error: "Could not save booking" });
+      return { statusCode: 502, headers: CORS, body: JSON.stringify({ success: false, error: "Could not save booking" }) };
     }
   } catch (e) {
-    return res.status(502).json({ success: false, error: "Could not save booking" });
+    return { statusCode: 502, headers: CORS, body: JSON.stringify({ success: false, error: "Could not save booking" }) };
   }
 
   // 2. Notify managers (best-effort — a Telegram outage must not fail a booking).
@@ -88,5 +93,5 @@ module.exports = async (req, res) => {
     // ignore — the booking is already saved
   }
 
-  return res.status(200).json({ success: true });
+  return { statusCode: 200, headers: CORS, body: JSON.stringify({ success: true }) };
 };
